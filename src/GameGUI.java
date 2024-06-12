@@ -65,19 +65,11 @@ public class GameGUI extends JFrame {
 
     public void Click_Singleplayer()
     {
-//        if(game == null)
-//            game = new Game(user, this);
-//        else
-//            game.setVisible(true);
         game = new Game(user, this);
         this.setVisible(false);
     }
     public void Click_Multiplayer()
     {
-//        if(gameClient == null)
-//            gameClient = new GameClient(user);
-//        else
-//            gameClient.setVisible(true);
         gameClient = new GameClient(user, this);
         this.setVisible(false);
     }
