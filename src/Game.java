@@ -9,7 +9,7 @@ import java.util.Iterator;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class GameClient extends JFrame {
+public class Game extends JFrame {
     // 将isRunning变量改为ThreadLocal，确保每个线程（游戏实例）都有自己的副本
     private ThreadLocal<Boolean> isRunning = ThreadLocal.withInitial(() -> true); // 控制游戏运行的标志
     private ConcurrentLinkedQueue<FallingWord> fallingWords;
@@ -23,15 +23,10 @@ public class GameClient extends JFrame {
     private final int wordFallInterval = 30; // 单词下落的时间间隔（秒）
     private ArrayList<String> words = new ArrayList<>();
     private String user;
-    private String opponent = "2";
     private JButton startButton;
     private final int fallingspeed = 1;//下落速度
-    private TCPClient client1;
-    private TCPClient client2;
-    private String host = "localhost";//连接地址
-    private String state = "0";
 
-    public GameClient(String username) {
+    public Game(String username) {
         super("打字游戏");
         user = username;
         fallingWords = new ConcurrentLinkedQueue<>();
@@ -39,53 +34,41 @@ public class GameClient extends JFrame {
         score1 = 0;
         random = new Random();
         readfile();
-        TCP();
-        promptForOpponentInfo();
         initializeStartButton();
         //initializeGame();
     }
 
-    private void promptForOpponentInfo() {
-        JTextField usernameField = new JTextField();
-        JTextField hostField = new JTextField();
-        Object[] message = {
-                "对手用户名:", usernameField,
-                "连接地址:", hostField
-        };
-
-        int option = JOptionPane.showConfirmDialog(this, message, "输入对手信息", JOptionPane.OK_CANCEL_OPTION);
-        if (option == JOptionPane.OK_OPTION) {
-            opponent = usernameField.getText();
-            host = hostField.getText();
-            // 现在您可以使用这些信息来设置TCP连接或其他操作
-        } else {
-            System.out.println("取消输入");
-            // 处理取消操作
-        }
-    }
-
-
     private void initializeStartButton() {
+        //gamePanel = new GamePanel();
+        //gamePanel.setPreferredSize(new Dimension(wallWidth, 600));
+        //add(gamePanel);
         pack();
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         setLocationRelativeTo(null);
         setVisible(true);
         startButton = new JButton("开始游戏");
-        startButton.addActionListener(e -> startGame());
+        startButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // 启动游戏的主要逻辑
+                startGame();
+            }
+        });
         this.add(startButton, BorderLayout.SOUTH);
-        new Thread(this::Sendinfo).start();
     }
 
     private void startGame() {
         // 移除开始按钮
         this.remove(startButton);
         // 重新绘制界面
-        state = "1";
         //isRunning.set(true);
         initializeGame();
         this.revalidate();
         this.repaint();
+        // 开始生成单词和下落的逻辑
+//        new Thread(this::generateWords).start();
+//        new Thread(this::fallWords).start();
     }
 
     private void initializeGame() {
@@ -116,23 +99,10 @@ public class GameClient extends JFrame {
             }
         });
 
+        // Start word generation thread
         new Thread(this::generateWords).start();
+        // Start word falling thread
         new Thread(this::fallWords).start();
-        //new Thread(this::Sendinfo).start();
-    }
-
-    private void Sendinfo()
-    {
-        while (isRunning.get()) {
-            try {
-                Thread.sleep(100);
-                client1.sendinfo(state + " " + score1);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 
     private void generateWords() {
@@ -266,11 +236,6 @@ public class GameClient extends JFrame {
             }
             return false;
         }
-    }
-
-    public void TCP(){
-        //client2 =  new TCPClient(opponent,user);
-        client1 =  new TCPClient(host,user,opponent);
     }
 
     public void readfile()

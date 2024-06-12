@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.sql.SQLException;
 
 public class GameLogin {
@@ -75,7 +76,9 @@ public class GameLogin {
                 public void actionPerformed(ActionEvent e) {
                     try {
                         ClickLogin_Jb();
-                    } catch (SQLException ex) {
+                    } catch (SQLException | IOException ex) {
+                        throw new RuntimeException(ex);
+                    } catch (Exception ex) {
                         throw new RuntimeException(ex);
                     }
                 }
@@ -85,16 +88,24 @@ public class GameLogin {
             //pack();
         }
 
-        public void ClickLogin_Jb() throws SQLException {
+        public void ClickLogin_Jb() throws Exception {
             String username = userField.getText();
             String password = passField.getText();
-            if(!GameSql.isexist(username, password))
+            if(username.equals("root") && password.equals("root"))
             {
-                JOptionPane.showMessageDialog(null, "用户名或密码错误，请重新输入！", "错误", JOptionPane.ERROR_MESSAGE);
+                //new GameServer();
+                //new GameClient1();
             }
-            else {
-                JOptionPane.showMessageDialog(null, "登录成功！", "成功", JOptionPane.INFORMATION_MESSAGE);
-                new GameGUI(x, y, 300, 300, username);
+            else
+            {
+                if(!GameSql.isexist(username, password))
+                {
+                    JOptionPane.showMessageDialog(null, "用户名或密码错误，请重新输入！", "错误", JOptionPane.ERROR_MESSAGE);
+                }
+                else {
+                    JOptionPane.showMessageDialog(null, "登录成功！", "成功", JOptionPane.INFORMATION_MESSAGE);
+                    new GameGUI(x, y, 300, 300, username);
+                }
             }
 
             System.out.println(username + "\n" + password + "\n");

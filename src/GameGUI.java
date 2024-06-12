@@ -5,11 +5,17 @@ import java.awt.event.ActionListener;
 
 public class GameGUI extends JFrame {
 
+    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+    double width = screenSize.getWidth();
+    double height = screenSize.getHeight();
+    int x = (int)width / 2 - 150;
+    int y = (int)height / 2 - 150;
+
     public JLabel userLabel;
     public JButton Singleplayer = new JButton("单人模式");
     public JButton Multiplayer = new JButton("多人模式");
     public JButton Result_inquiry = new JButton("成绩查询");
-
+    public String user;
 
     GameGUI(int x, int y, int h, int w, String username) {
         super("打字游戏");
@@ -28,8 +34,9 @@ public class GameGUI extends JFrame {
 
         setDefaultCloseOperation(HIDE_ON_CLOSE);
 
-        String user = "用户名：" + username;
+        user = "用户名：" + username;
         userLabel = new JLabel(user);
+        user = username;
         // 添加组件到窗口
         constraints.gridx = 0;
         constraints.gridy = 0;
@@ -56,15 +63,14 @@ public class GameGUI extends JFrame {
 
     public void Click_Singleplayer()
     {
-
+        new Game(user);
     }
     public void Click_Multiplayer()
     {
-
+        new GameClient(user);
     }
     public void Click_Result_inquiry()
     {
-
+        new Userinfo(x, y, 800, 600, user);
     }
-
 }
