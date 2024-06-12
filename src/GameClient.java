@@ -6,15 +6,18 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class GameClient extends JFrame {
     // 将isRunning变量改为ThreadLocal，确保每个线程（游戏实例）都有自己的副本
-    private ThreadLocal<Boolean> isRunning = ThreadLocal.withInitial(() -> true); // 控制游戏运行的标志
+    //private ThreadLocal<Boolean> isRunning = ThreadLocal.withInitial(() -> true); // 控制游戏运行的标志
+    private Boolean isRunning = true;
     private ConcurrentLinkedQueue<FallingWord> fallingWords;
     private int score = 100;
     private int score1 = 0;
+    private int score2 = 0;
     private GamePanel gamePanel;
     private JPanel defenseWall;
     private Random random;
@@ -25,22 +28,25 @@ public class GameClient extends JFrame {
     private String user;
     private String opponent = "2";
     private JButton startButton;
-    private final int fallingspeed = 1;//下落速度
+    private JLabel opponenstate;
+    private double fallingspeed = 1;//下落速度
     private TCPClient client1;
     private TCPClient client2;
     private String host = "localhost";//连接地址
-    private String state = "0";
+    private String state1 = "0";
+    private String state2 = "0";
+
 
     public GameClient(String username) {
-        super("打字游戏");
+        super("打字游戏(当前用户：" + username + ")");
         user = username;
         fallingWords = new ConcurrentLinkedQueue<>();
         score = 100;
         score1 = 0;
         random = new Random();
+        promptForOpponentInfo();
         readfile();
         TCP();
-        promptForOpponentInfo();
         initializeStartButton();
         //initializeGame();
     }
@@ -71,21 +77,74 @@ public class GameClient extends JFrame {
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         setLocationRelativeTo(null);
         setVisible(true);
-        startButton = new JButton("开始游戏");
+        startButton = new JButton("准备");
         startButton.addActionListener(e -> startGame());
+        opponenstate = new JLabel("对手状态：未连接");
+        opponenstate.setBounds(650, 0, 150, 30);
+        this.add(opponenstate, BorderLayout.NORTH);
         this.add(startButton, BorderLayout.SOUTH);
         new Thread(this::Sendinfo).start();
+        new Thread(this::getopponentstate).start();
+    }
+
+    private void updateOpponentState()
+    {
+        String st = "未连接";
+        if(Objects.equals(state2, "0"))
+            st = "未连接";
+        if(Objects.equals(state2, "1"))
+            st = "已准备";
+        if(Objects.equals(state2, "2"))
+            st = "对战中";
+        opponenstate.setText("对手状态：" + st);
     }
 
     private void startGame() {
-        // 移除开始按钮
-        this.remove(startButton);
         // 重新绘制界面
-        state = "1";
-        //isRunning.set(true);
-        initializeGame();
-        this.revalidate();
-        this.repaint();
+        state1 = "1";
+        startButton.setText("准备成功");
+    }
+
+    private void getopponentstate() {
+        while (isRunning) {
+            try {
+                Thread.sleep(1);
+                state2 = client1.getstate();
+                updateOpponentState();
+                if(Objects.equals(state2, "4")) GameOver();
+                //score2 = client1.getscore();
+                if(state1.equals("1") && Objects.equals(state2, "1"))
+                {
+                    client1.sendinfo("state " + state1 + " score " + score1);
+                    state1 = "2";
+                    // 移除开始按钮
+                    this.remove(startButton);
+                    initializeGame();
+                    this.revalidate();
+                    this.repaint();
+                    this.remove(opponenstate);
+                    new Thread(this::getopponentscore).start();
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+    }
+
+    private void getopponentscore() {
+        while (isRunning) {
+            try {
+                Thread.sleep(500);
+                score2 = client1.getscore();
+                fallingspeed = Math.max(1,1 + (score2 - score1) / 10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+        }
     }
 
     private void initializeGame() {
@@ -95,7 +154,7 @@ public class GameClient extends JFrame {
         pack();
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        setLocationRelativeTo(null);
+        //setLocationRelativeTo(null);
         setVisible(true);
         //setResizable(false);
 
@@ -118,15 +177,43 @@ public class GameClient extends JFrame {
 
         new Thread(this::generateWords).start();
         new Thread(this::fallWords).start();
-        //new Thread(this::Sendinfo).start();
+        //new Thread(this::Sendscore).start();
+    }
+
+    private void SendSate()
+    {
+        while (isRunning) {
+            try {
+                Thread.sleep(100);
+                client1.sendinfo("state " + state1);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private void Sendscore()
+    {
+        while (isRunning) {
+            try {
+                Thread.sleep(1000);
+                client1.sendinfo("score " + score1);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private void Sendinfo()
     {
-        while (isRunning.get()) {
+        while (isRunning) {
             try {
                 Thread.sleep(100);
-                client1.sendinfo(state + " " + score1);
+                client1.sendinfo("state " + state1 + " score " + score1);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (IOException e) {
@@ -136,7 +223,7 @@ public class GameClient extends JFrame {
     }
 
     private void generateWords() {
-        while (isRunning.get()) {
+        while (isRunning) {
             try {
                 //Thread.sleep(0000);
                 String word = generateRandomWord();
@@ -150,7 +237,7 @@ public class GameClient extends JFrame {
     }
 
     private void fallWords() {
-        while (isRunning.get()) {
+        while (isRunning) {
             try {
                 for (FallingWord fallingWord : fallingWords) {
                     fallingWord.y += fallingspeed; // 控制下落速度
@@ -215,12 +302,32 @@ public class GameClient extends JFrame {
             g.setColor(Color.GREEN);
             g.fillRect(0, getHeight() - wallHeight, currentWallLength, wallHeight);
             drawScore(g);
+            drawState(g);
         }
 
         private void drawScore(Graphics g) {
             g.setColor(Color.BLACK);
-            g.setFont(new Font("Arial", Font.BOLD, 18));
-            g.drawString("Score: " + score1, 10, 20);
+            g.setFont(new Font("SimSun", Font.BOLD, 18));
+            g.drawString("我的得分: " + score1, 10, 20);
+            g.drawString("对手得分: " + score2, 10, 40);
+
+        }
+
+        private void drawState(Graphics g){
+            g.setColor(Color.BLACK);
+            g.setFont(new Font("SimSun", Font.BOLD, 18));
+            if(Objects.equals(state2, "0"))
+            {
+                g.drawString("对手状态: 掉线" , 630, 20);
+            }
+            if(Objects.equals(state2, "1"))
+            {
+                g.drawString("对手状态: 已准备" , 630, 20);
+            }
+            if(Objects.equals(state2, "2"))
+            {
+                g.drawString("对手状态: 对战中" , 630, 20);
+            }
         }
 
         public void updateWallLength(int score) {
@@ -231,13 +338,15 @@ public class GameClient extends JFrame {
     }
 
     public void GameOver() {
-        if(isRunning.get())
+        if(isRunning)
         {
-            isRunning.set(false); // 停止游戏循环
+            isRunning = false; // 停止游戏循环
             // 停止生成新单词和下落的单词
             // 显示游戏结束的消息
-            GameSql.add(user, score1);
-            JOptionPane.showMessageDialog(this, "游戏结束！您的最终得分是：" + score1, "游戏结束", JOptionPane.INFORMATION_MESSAGE);
+            //GameSql.add(user, score1);
+            state1 = "4";
+            JOptionPane.showMessageDialog(this, "游戏结束！您的最终得分是：" + score1 +"\n对手得分是：" + score2, "游戏结束", JOptionPane.INFORMATION_MESSAGE);
+            GameSql.add(user, score1, opponent, score2);
             //System.exit(0); // 或者您可以选择其他方式来结束游戏，比如返回主菜单
             this.dispose();
         }
@@ -269,7 +378,7 @@ public class GameClient extends JFrame {
     }
 
     public void TCP(){
-        //client2 =  new TCPClient(opponent,user);
+        //client2 =  new TCPClient(host, opponent,user);
         client1 =  new TCPClient(host,user,opponent);
     }
 

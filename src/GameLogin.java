@@ -76,8 +76,6 @@ public class GameLogin {
                 public void actionPerformed(ActionEvent e) {
                     try {
                         ClickLogin_Jb();
-                    } catch (SQLException | IOException ex) {
-                        throw new RuntimeException(ex);
                     } catch (Exception ex) {
                         throw new RuntimeException(ex);
                     }
@@ -85,29 +83,21 @@ public class GameLogin {
             });
 
             Register_Jb.addActionListener(e -> ClickRegister_Jb());
-            //pack();
         }
 
-        public void ClickLogin_Jb() throws Exception {
+        public void ClickLogin_Jb() {
             String username = userField.getText();
             String password = passField.getText();
-            if(username.equals("root") && password.equals("root"))
-            {
-                //new GameServer();
-                //new GameClient1();
-            }
-            else
-            {
-                if(!GameSql.isexist(username, password))
+             if(!GameSql.isexist(username, password))
                 {
                     JOptionPane.showMessageDialog(null, "用户名或密码错误，请重新输入！", "错误", JOptionPane.ERROR_MESSAGE);
                 }
                 else {
                     JOptionPane.showMessageDialog(null, "登录成功！", "成功", JOptionPane.INFORMATION_MESSAGE);
                     new GameGUI(x, y, 300, 300, username);
+                    userField.setText("");
+                    passField.setText("");
                 }
-            }
-
             System.out.println(username + "\n" + password + "\n");
         }
 
@@ -132,6 +122,6 @@ public class GameLogin {
 
         new gui(x, y, 300, 300);
 
-        GameSql.init();
+        //GameSql.init();
     }
 }

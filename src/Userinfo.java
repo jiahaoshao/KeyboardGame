@@ -26,7 +26,7 @@ public class Userinfo extends JFrame {
         setDefaultCloseOperation(HIDE_ON_CLOSE);
         //pack();
         String[][] tableDate = GameSql.findscord(username);
-        String[] name = {"用户名", "练习时间", "练习成绩", "比赛时间", "成绩", "对手成绩"};
+        String[] name = {"用户名", "练习时间", "练习成绩", "比赛时间", "成绩", "对手","对手成绩"};
         table = new JTable(Objects.requireNonNull(tableDate), name);
         // 设置 constraints 来铺满整个画布
         constraints.fill = GridBagConstraints.BOTH; // 让组件完全填充其显示区域

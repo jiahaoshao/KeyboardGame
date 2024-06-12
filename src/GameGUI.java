@@ -16,6 +16,8 @@ public class GameGUI extends JFrame {
     public JButton Multiplayer = new JButton("多人模式");
     public JButton Result_inquiry = new JButton("成绩查询");
     public String user;
+    private GameClient gameClient = null;
+    private Game game = null;
 
     GameGUI(int x, int y, int h, int w, String username) {
         super("打字游戏");
@@ -63,11 +65,19 @@ public class GameGUI extends JFrame {
 
     public void Click_Singleplayer()
     {
-        new Game(user);
+        if(game == null)
+            game = new Game(user);
+        else
+            game.setVisible(true);
+
     }
     public void Click_Multiplayer()
     {
-        new GameClient(user);
+//        if(gameClient == null)
+//            gameClient = new GameClient(user);
+//        else
+//            gameClient.setVisible(true);
+        gameClient = new GameClient(user);
     }
     public void Click_Result_inquiry()
     {

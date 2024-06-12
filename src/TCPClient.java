@@ -2,20 +2,26 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class TCPClient {
-    private static ObjectOutputStream oOut;
+public class TCPClient{
+    private  ObjectOutputStream oOut;
     private ObjectInputStream oIn;
-    private static Message message;
-    private static String name;
-    private static String to;
+    private  Message message;
+    private String host;
+    private  String name;
+    private  String to;
+    private readInfoThread reader;
 
-    TCPClient(String host, String name1, String to1){
+    TCPClient(String host1, String name1, String to1){
         name = name1;
         to = to1;
+        host = host1;
         //单线程池
         ExecutorService es = Executors.newSingleThreadExecutor();
         try {
@@ -38,8 +44,8 @@ public class TCPClient {
             //打印服务器返回的信息+当前客户端的名字
             System.out.println(message.getInfo() + message.getFrom());
             //2、启动读取消息的线程
-            es.execute(new readInfoThread(oIn));  //读取线程完成
-
+            reader = new readInfoThread(oIn);
+            es.execute(reader);  //读取线程完成
             //3、发送消息
             //使用主线程来发送消息
 
@@ -65,6 +71,30 @@ public class TCPClient {
         //发送给服务器
         oOut.writeObject(message);
     }
+
+    public String getstate()
+    {
+        Message readerMessage1 = reader.getMessage1();
+        if(readerMessage1 == null || readerMessage1.getInfo() == null) return "0";
+        String state = readerMessage1.getInfo();
+        String[] state1 = state.split(" ");
+        if(Objects.equals(state1[0], "state"))
+            return state1[1];
+        return "0";
+    }
+
+    public int getscore()
+    {
+        Message readerMessage1 = reader.getMessage1();
+        if(readerMessage1 == null || readerMessage1.getInfo() == null) return 0;
+        String state = readerMessage1.getInfo();
+        String[] state1 = state.split(" ");
+        if(Objects.equals(state1[2], "score"))
+        {
+            return Integer.parseInt(state1[3]);
+        }
+        return 0;
+    }
 }
 
 /**
@@ -73,6 +103,8 @@ public class TCPClient {
 class readInfoThread implements Runnable {
     private ObjectInputStream oIn; //输入流 用来读操作
     private boolean flag = true; //标记
+    private List<Message> messageList = Collections.synchronizedList(new ArrayList<>());
+    private Message message1;
 
     public readInfoThread(ObjectInputStream oIn) {
         this.oIn = oIn;
@@ -90,8 +122,10 @@ class readInfoThread implements Runnable {
             while (flag) {
                 //读取信息
                 Message message = (Message) oIn.readObject();
+                messageList.add(message);
+                message1 = message;
                 //输出用户名+内容
-                System.out.println("[" + message.getFrom() + "]对我说：" + message.getInfo());
+                System.out.println("[" + message.getFrom() + "]对[" + message.getTo() + "]说：" + message.getInfo());
             }
             //没有数据就关闭
             if(oIn != null){
@@ -101,7 +135,16 @@ class readInfoThread implements Runnable {
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
+    }
 
+    // 公共方法来获取消息列表
+    public List<Message> getMessageList() {
+        synchronized (messageList) {
+            return new ArrayList<>(messageList); // 返回消息列表的副本
+        }
+    }
 
+    public Message getMessage1() {
+        return message1;
     }
 }

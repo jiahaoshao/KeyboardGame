@@ -16,7 +16,7 @@ public class GameServer {
         //创建服务器端的Socket
         try {
             ServerSocket server = new ServerSocket(8888);
-            System.out.println("服务器以启动，正在等待连接...");
+            System.out.println("服务器已启动，正在等待连接...");
             while(true){
                 //接受客户端的Socket，若没有，阻塞在这
                 Socket socket = server.accept();
@@ -44,6 +44,7 @@ class UserThread implements Runnable{
     public UserThread(Socket socket, Vector<UserThread> vector) {
         this.socket = socket;
         this.vector = vector;
+        System.out.println("服务端");
         vector.add(this);    //把当前线程也加入vector中
     }
 
@@ -52,8 +53,8 @@ class UserThread implements Runnable{
         try {
             //1、构造输入输出流
             System.out.println("客户端：" + socket.getInetAddress().getHostAddress() + "已连接！");
-            oIn = new ObjectInputStream(socket.getInputStream());
             oOut = new ObjectOutputStream((socket.getOutputStream()));
+            oIn = new ObjectInputStream(socket.getInputStream());
             //2、循环读取
             while(flag){
                 //读取消息对象
@@ -85,10 +86,19 @@ class UserThread implements Runnable{
                 }
 
             }
-
-
-
-        } catch (IOException | ClassNotFoundException e) {
+        }catch (IOException e) {
+            System.out.println(name + " 断开了连接。");
+            // 从 vector 中移除当前线程
+            vector.remove(this);
+            // 关闭资源
+            try {
+                if (oIn != null) oIn.close();
+                if (oOut != null) oOut.close();
+                if (socket != null) socket.close();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
 
