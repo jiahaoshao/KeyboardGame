@@ -26,7 +26,7 @@ public class Game extends JFrame {
     private JButton startButton;
     private final int fallingspeed = 1;//下落速度
 
-    public Game(String username) {
+    public Game(String username, GameGUI gameGUI) {
         super("打字游戏");
         user = username;
         fallingWords = new ConcurrentLinkedQueue<>();
@@ -35,6 +35,13 @@ public class Game extends JFrame {
         random = new Random();
         readfile();
         initializeStartButton();
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                super.windowClosed(e);
+                gameGUI.setVisible(true);
+            }
+        });
         //initializeGame();
     }
 
@@ -44,7 +51,7 @@ public class Game extends JFrame {
         //add(gamePanel);
         pack();
         setSize(800, 600);
-        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setVisible(true);
         startButton = new JButton("开始游戏");

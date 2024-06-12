@@ -37,7 +37,7 @@ public class GameClient extends JFrame {
     private String state2 = "0";
 
 
-    public GameClient(String username) {
+    public GameClient(String username, GameGUI gameGUI) {
         super("打字游戏(当前用户：" + username + ")");
         user = username;
         fallingWords = new ConcurrentLinkedQueue<>();
@@ -48,6 +48,13 @@ public class GameClient extends JFrame {
         readfile();
         TCP();
         initializeStartButton();
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                super.windowClosed(e);
+                gameGUI.setVisible(true);
+            }
+        });
         //initializeGame();
     }
 
@@ -74,7 +81,7 @@ public class GameClient extends JFrame {
     private void initializeStartButton() {
         pack();
         setSize(800, 600);
-        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setVisible(true);
         startButton = new JButton("准备");
@@ -153,7 +160,7 @@ public class GameClient extends JFrame {
         add(gamePanel);
         pack();
         setSize(800, 600);
-        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         //setLocationRelativeTo(null);
         setVisible(true);
         //setResizable(false);
