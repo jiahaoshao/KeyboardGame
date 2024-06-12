@@ -13,8 +13,8 @@ public class GameSql {
     static final String JDBC_DRIVER = "com.mysql.cj.jdbc.Driver";
     // test为数据库名,?后面这句很重要,设置useSSl=false
 
-
-    static final String DB_URL = "jdbc:mysql://192.168.132.47:3306/keyboardgame?characterEncoding=UTF8&autoReconnect=true&useSSL=false&&serverTimezone=GMT%2B8";
+    //static final String DB_URL = "jdbc:mysql://10.105.242.176:3306/keyboardgame?characterEncoding=UTF8&autoReconnect=true&useSSL=false&&serverTimezone=GMT%2B8";
+    static final String DB_URL = "jdbc:mysql://localhost:3306/keyboardgame?characterEncoding=UTF8&autoReconnect=true&useSSL=false&&serverTimezone=GMT%2B8";
 
     // 数据库的用户名与密码，需要根据自己的设置
     static final String USER = "root";

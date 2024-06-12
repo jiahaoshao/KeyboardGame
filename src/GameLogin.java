@@ -88,7 +88,9 @@ public class GameLogin {
         public void ClickLogin_Jb() {
             String username = userField.getText();
             String password = passField.getText();
-             if(!GameSql.isexist(username, password))
+            if(username != null && password != null)
+            {
+                if(!GameSql.isexist(username, password))
                 {
                     JOptionPane.showMessageDialog(null, "用户名或密码错误，请重新输入！", "错误", JOptionPane.ERROR_MESSAGE);
                 }
@@ -98,7 +100,9 @@ public class GameLogin {
                     userField.setText("");
                     passField.setText("");
                 }
-            System.out.println(username + "\n" + password + "\n");
+                System.out.println(username + "\n" + password + "\n");
+            }
+
         }
 
         public void ClickRegister_Jb()
